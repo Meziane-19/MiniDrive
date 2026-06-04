@@ -1,0 +1,30 @@
+DOSSIER IMAGES — MiniDrive Collection
+======================================
+
+Place ici tes photos PNG de chaque voiture miniature.
+Les noms de fichiers doivent correspondre EXACTEMENT à ceux ci-dessous.
+Tant qu'un fichier est absent, l'emoji s'affiche à la place (fallback).
+
+FICHIERS ATTENDUS :
+-------------------
+ferrari-250-gto.jpg          → Ferrari 250 GTO 1962
+porsche-911-rsr.jpg          → Porsche 911 RSR 2023
+lamborghini-countach.jpg     → Lamborghini Countach LP500S
+mclaren-p1.jpg               → McLaren P1 Hypercar
+bugatti-veyron-ss.jpg        → Bugatti Veyron 16.4 Super Sport
+shelby-gt500-eleanor.jpg     → Shelby GT500 Eleanor
+dodge-charger-daytona.jpg    → Dodge Charger Daytona 1969
+mercedes-amg-gt-bs.jpg       → Mercedes-AMG GT Black Series
+bmw-m3-e30.jpg               → BMW M3 E30 Sport Evolution
+aston-martin-db5.jpg         → Aston Martin DB5 James Bond
+ferrari-f40.jpg              → Ferrari F40 1987
+porsche-917k.jpg             → Porsche 917K Le Mans 1970
+lamborghini-huracan.jpg      → Lamborghini Huracán EVO Spyder
+mclaren-f1-gtr.jpg           → McLaren F1 GTR 1995
+bugatti-chiron-ss300.jpg     → Bugatti Chiron Super Sport 300+
+
+CONSEILS :
+----------
+- Format PNG recommandé (fond transparent si possible)
+- Taille idéale : 600×400 px minimum
+- Fond transparent ou sombre pour un meilleur rendu sur le site

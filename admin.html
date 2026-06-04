@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — MiniDrive Collection</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Données servies par l'API PHP/MySQL (dossier /api) -->
+  <!-- EmailJS : envoi des e-mails de confirmation de commande -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    body { background: var(--noir); }
+
+    .admin-wrapper {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .admin-title {
+      font-family: 'Georgia', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--creme);
+    }
+
+    .admin-title span { color: var(--or-light); }
+
+    .admin-back {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .admin-back:hover { color: var(--or-light); }
+
+    /* Onglets */
+    .admin-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1.8rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+    }
+
+    .admin-tab {
+      padding: 9px 22px;
+      border-radius: 8px 8px 0 0;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Segoe UI', sans-serif;
+      position: relative;
+      bottom: -1px;
+    }
+
+    .admin-tab:hover { color: var(--creme); }
+
+    .admin-tab.active {
+      background: var(--noir-soft);
+      border-color: var(--border);
+      border-bottom-color: var(--noir-soft);
+      color: var(--or-light);
+    }
+
+    .tab-badge {
+      background: var(--or);
+      color: var(--noir);
+      font-size: 0.65rem;
+      font-weight: 900;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 5px;
+    }
+
+    /* Panneau */
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; }
+
+    /* Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--noir-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--vert), var(--or));
+    }
+
+    .stat-card-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--or-light);
+      font-family: 'Georgia', serif;
+      display: block;
+    }
+
+    .stat-card-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Table */
+    .admin-table-wrap {
+      background: var(--noir-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .admin-table-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.4rem;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .admin-table-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--creme);
+      font-family: 'Georgia', serif;
+    }
+
+    .admin-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 12px;
+    }
+
+    .admin-search input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--creme);
+      font-size: 0.83rem;
+      width: 180px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .admin-search input::placeholder { color: var(--text-muted); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--or-dark);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(176,141,87,0.04); }
+
+    tbody td {
+      padding: 11px 14px;
+      font-size: 0.83rem;
+      color: var(--text-soft);
+      vertical-align: middle;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .td-name { font-weight: 700; color: var(--creme); }
+    .td-total { font-weight: 700; color: var(--or-light); font-family: 'Georgia', serif; }
+
+    .statut-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .statut-attente  { background: rgba(176,141,87,0.15); color: var(--or);       border: 1px solid rgba(176,141,87,0.3); }
+    .statut-validee  { background: rgba(31,77,58,0.25);   color: #6DBF9E;         border: 1px solid rgba(31,77,58,0.5); }
+    .statut-annulee  { background: rgba(140,20,20,0.2);   color: #E07070;         border: 1px solid rgba(140,20,20,0.4); }
+
+    .btn-statut {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .btn-statut:hover { border-color: var(--or-dark); color: var(--or-light); }
+
+    .articles-list {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Avis stars */
+    .avis-stars { color: var(--or); font-size: 0.8rem; }
+    .avis-text  { font-style: italic; color: var(--text-muted); font-size: 0.8rem; max-width: 280px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .empty-state .empty-icon { font-size: 2.5rem; display: block; margin-bottom: 0.8rem; }
+
+    /* Boutons actions */
+    .admin-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-admin {
+      padding: 8px 16px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-admin:hover { border-color: var(--or-dark); color: var(--or-light); background: rgba(176,141,87,0.06); }
+    .btn-admin.danger:hover { border-color: #c0392b; color: #e07070; background: rgba(192,57,43,0.08); }
+  </style>
+</head>
+<body>
+
+<div class="promo-banner" style="justify-content:center;">
+  🔒 Page d'administration — MiniDrive Collection
+</div>
+
+<div class="admin-wrapper">
+
+  <div class="admin-header">
+    <h1 class="admin-title">Tableau de bord <span>Admin</span></h1>
+    <a href="index.html" class="admin-back">← Retour au site</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <span class="stat-card-val" id="statCommandes">—</span>
+      <span class="stat-card-label">Commandes</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-val" id="statCA">—</span>
+      <span class="stat-card-label">Chiffre d'affaires</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-val" id="statAvis">—</span>
+      <span class="stat-card-label">Avis clients</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card-val" id="statNote">—</span>
+      <span class="stat-card-label">Note moyenne</span>
+    </div>
+  </div>
+
+  <!-- Onglets -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="commandes">
+      📦 Commandes <span class="tab-badge" id="badgeCommandes">0</span>
+    </button>
+    <button class="admin-tab" data-tab="avis">
+      ⭐ Avis <span class="tab-badge" id="badgeAvis">0</span>
+    </button>
+  </div>
+
+  <!-- PANEL COMMANDES -->
+  <div class="admin-panel active" id="panel-commandes">
+    <div class="admin-actions">
+      <button class="btn-admin" onclick="exportCSV()">⬇️ Exporter CSV</button>
+      <button class="btn-admin danger" onclick="clearCommandes()">🗑 Vider les commandes</button>
+    </div>
+    <div class="admin-table-wrap">
+      <div class="admin-table-head">
+        <span class="admin-table-title">Liste des commandes</span>
+        <div class="admin-search">
+          <span>🔍</span>
+          <input type="text" id="searchCommandes" placeholder="Rechercher…" />
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Client</th>
+            <th>Email</th>
+            <th>Articles</th>
+            <th>Total</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyCommandes"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PANEL AVIS -->
+  <div class="admin-panel" id="panel-avis">
+    <div class="admin-actions">
+      <button class="btn-admin danger" onclick="clearAvis()">🗑 Vider les avis</button>
+    </div>
+    <div class="admin-table-wrap">
+      <div class="admin-table-head">
+        <span class="admin-table-title">Avis clients</span>
+        <div class="admin-search">
+          <span>🔍</span>
+          <input type="text" id="searchAvis" placeholder="Rechercher…" />
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Client</th>
+            <th>Modèle</th>
+            <th>Note</th>
+            <th>Commentaire</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyAvis"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await initDB();
+  renderAll();
+
+  // Onglets
+  document.querySelectorAll('.admin-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Recherche commandes
+  document.getElementById('searchCommandes').addEventListener('input', e => {
+    renderCommandes(e.target.value.toLowerCase());
+  });
+
+  // Recherche avis
+  document.getElementById('searchAvis').addEventListener('input', e => {
+    renderAvis(e.target.value.toLowerCase());
+  });
+});
+
+function renderAll() {
+  renderCommandes();
+  renderAvis();
+  renderStats();
+}
+
+function renderStats() {
+  const commandes = queryAllCommandes();
+  const avis      = queryAllAvis();
+  const ca        = commandes.reduce((s, c) => s + c.total, 0);
+  const note      = avis.length ? (avis.reduce((s, a) => s + a.rating, 0) / avis.length).toFixed(1) : '—';
+
+  document.getElementById('statCommandes').textContent = commandes.length;
+  document.getElementById('statCA').textContent        = ca.toFixed(2) + ' €';
+  document.getElementById('statAvis').textContent      = avis.length;
+  document.getElementById('statNote').textContent      = note + (avis.length ? ' ★' : '');
+  document.getElementById('badgeCommandes').textContent = commandes.length;
+  document.getElementById('badgeAvis').textContent      = avis.length;
+}
+
+function renderCommandes(search = '') {
+  let commandes = queryAllCommandes();
+  if (search) commandes = commandes.filter(c =>
+    c.client.toLowerCase().includes(search) ||
+    c.email.toLowerCase().includes(search)
+  );
+
+  const tbody = document.getElementById('tbodyCommandes');
+  if (!commandes.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><span class="empty-icon">📦</span>Aucune commande enregistrée.</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = commandes.map(c => {
+    const date     = new Date(c.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const articles = c.articles.map(a => `${a.name} ×${a.qty}`).join('<br>');
+    const badge    = statutBadge(c.statut);
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:0.75rem;">#${c.id}</td>
+      <td class="td-name">${escHtml(c.client)}<br><span style="font-size:0.72rem;color:var(--text-muted);font-weight:400">${escHtml(c.adresse)}</span></td>
+      <td>${escHtml(c.email)}<br><span style="font-size:0.72rem;color:var(--text-muted)">${escHtml(c.telephone)}</span></td>
+      <td><div class="articles-list">${articles}</div></td>
+      <td class="td-total">${c.total.toFixed(2)} €</td>
+      <td style="white-space:nowrap;font-size:0.75rem;">${date}</td>
+      <td>${badge}</td>
+      <td>
+        <button class="btn-statut" onclick="cycleStatut(${c.id})">Changer</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAvis(search = '') {
+  let avis = queryAllAvis();
+  if (search) avis = avis.filter(a =>
+    a.name.toLowerCase().includes(search) ||
+    (a.product || '').toLowerCase().includes(search) ||
+    a.text.toLowerCase().includes(search)
+  );
+
+  const tbody = document.getElementById('tbodyAvis');
+  if (!avis.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><span class="empty-icon">⭐</span>Aucun avis enregistré.</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = avis.map(a => {
+    const stars = '★'.repeat(a.rating) + '☆'.repeat(5 - a.rating);
+    const date  = new Date(a.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:0.75rem;">#${a.id}</td>
+      <td class="td-name">${escHtml(a.name)}</td>
+      <td style="font-size:0.78rem;color:var(--or-dark)">${escHtml(a.product || '—')}</td>
+      <td class="avis-stars">${stars}</td>
+      <td class="avis-text">"${escHtml(a.text)}"</td>
+      <td style="white-space:nowrap;font-size:0.75rem;">${date}</td>
+      <td><button class="btn-statut danger" onclick="deleteAvis(${a.id})" style="color:#e07070">Supprimer</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function statutBadge(statut) {
+  const map = {
+    'En attente': 'statut-attente',
+    'Validée':    'statut-validee',
+    'Annulée':    'statut-annulee',
+  };
+  return `<span class="statut-badge ${map[statut] || 'statut-attente'}">${statut}</span>`;
+}
+
+function cycleStatut(id) {
+  const ordre  = ['En attente', 'Validée', 'Annulée'];
+  const all    = queryAllCommandes();
+  const cmd    = all.find(c => c.id === id);
+  if (!cmd) return;
+  const idx    = ordre.indexOf(cmd.statut);
+  const next   = ordre[(idx + 1) % ordre.length];
+  DB.run('UPDATE commandes SET statut = ? WHERE id = ?', [next, id]);
+  persistDB();
+  renderAll();
+  showToast(`Commande #${id} → ${next}`, 'success');
+}
+
+function deleteAvis(id) {
+  DB.run('DELETE FROM avis WHERE id = ?', [id]);
+  persistDB();
+  renderAll();
+  showToast('Avis supprimé.', 'success');
+}
+
+function clearCommandes() {
+  if (!confirm('Vider toutes les commandes ?')) return;
+  DB.run('DELETE FROM commandes');
+  persistDB();
+  renderAll();
+  showToast('Commandes effacées.', 'success');
+}
+
+function clearAvis() {
+  if (!confirm('Vider tous les avis ?')) return;
+  DB.run('DELETE FROM avis');
+  persistDB();
+  renderAll();
+  showToast('Avis effacés.', 'success');
+}
+
+function exportCSV() {
+  const commandes = queryAllCommandes();
+  if (!commandes.length) { showToast('Aucune commande à exporter.', 'error'); return; }
+  const rows = [['#','Client','Email','Téléphone','Adresse','Articles','Total','Statut','Date']];
+  commandes.forEach(c => {
+    rows.push([
+      c.id,
+      c.client,
+      c.email,
+      c.telephone,
+      c.adresse,
+      c.articles.map(a => `${a.name} x${a.qty}`).join(' | '),
+      c.total.toFixed(2) + '€',
+      c.statut,
+      new Date(c.date).toLocaleString('fr-FR'),
+    ]);
+  });
+  const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'commandes-minidrive.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(str || ''));
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Avis & Contact — MiniDrive Collection</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏎️</text></svg>" />
+  <!-- Données servies par l'API PHP/MySQL (dossier /api) -->
+  <!-- EmailJS : envoi des e-mails de confirmation de commande -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+
+<!-- PROMO BANNER -->
+<div class="promo-banner">
+  🎉 Livraison gratuite dès 80€ d'achat &nbsp;|&nbsp; <a href="catalogue.html">Voir le catalogue →</a>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="logo-icon">
+      <img src="images/logominidrive.png" alt="MiniDrive" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><span style="display:none">🏎️</span>
+    </div>
+    <div>
+      <span class="brand-name">MiniDrive</span>
+      <span class="brand-sub">Collection</span>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="catalogue.html">Catalogue</a></li>
+    <li><a href="avis.html" class="active">Avis & Contact</a></li>
+  </ul>
+  <button class="nav-cart" id="cartBtn">
+    🛒 Panier
+    <span class="cart-badge" id="cartCount">0</span>
+  </button>
+</nav>
+
+<!-- AVIS HERO -->
+<div class="avis-hero">
+  <div class="orbs-container">
+    <div class="orb orb-red   orb-lg  orb-1"></div>
+    <div class="orb orb-green orb-md  orb-2"></div>
+    <div class="orb orb-red   orb-sm  orb-3"></div>
+    <div class="orb orb-green orb-lg  orb-4"></div>
+    <div class="orb orb-red   orb-md  orb-5"></div>
+    <div class="orb orb-green orb-sm  orb-6"></div>
+  </div>
+  <div class="section-tag">⭐ Avis Clients</div>
+  <h1 class="section-title" style="margin-top:0.75rem;">Ce que disent nos <span>Collectionneurs</span></h1>
+  <p class="section-desc">Des passionnés comme vous partagent leurs expériences avec MiniDrive</p>
+</div>
+
+<!-- AVIS CONTENT -->
+<div class="avis-content">
+
+  <!-- FORMULAIRE -->
+  <div class="avis-form-section">
+    <h2 class="avis-form-title">✍️ Laisser un Avis</h2>
+
+    <div class="form-group">
+      <label class="form-label">Votre Prénom *</label>
+      <input type="text" class="form-input" id="reviewName" placeholder="Ex: Jean-Pierre" maxlength="50" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Email (non publié)</label>
+      <input type="email" class="form-input" id="reviewEmail" placeholder="votre@email.com" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Modèle Acheté</label>
+      <select class="form-select-avis" id="reviewProduct">
+        <option value="">— Sélectionner un modèle —</option>
+        <!-- Options injectées par JS -->
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Note *</label>
+      <div class="star-rating-input" id="starRatingInput">
+        <span class="star-input" data-val="1">★</span>
+        <span class="star-input" data-val="2">★</span>
+        <span class="star-input" data-val="3">★</span>
+        <span class="star-input" data-val="4">★</span>
+        <span class="star-input" data-val="5">★</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Votre Avis *</label>
+      <textarea class="form-textarea" id="reviewText" placeholder="Partagez votre expérience avec ce modèle, la qualité, les détails…" maxlength="500"></textarea>
+      <div style="text-align:right;font-size:0.75rem;color:var(--text-muted);margin-top:4px;">
+        <span id="charCount">0</span>/500
+      </div>
+    </div>
+
+    <button class="btn-submit-avis" id="submitReview">
+      ✅ Publier mon Avis
+    </button>
+  </div>
+
+  <!-- LISTE DES AVIS -->
+  <div>
+    <!-- Résumé des notes -->
+    <div class="rating-summary" id="ratingSummary">
+      <div class="rating-big">
+        <div class="rating-number" id="avgRating">4.8</div>
+        <div class="rating-stars-big" id="avgStars"></div>
+        <div class="rating-count" id="totalReviews">— avis</div>
+      </div>
+      <div class="rating-bars" id="ratingBars"></div>
+    </div>
+
+    <div class="avis-list-title">💬 Avis des Clients</div>
+    <div class="avis-list-section" id="reviewsList">
+      <!-- Injecté via JS -->
+    </div>
+  </div>
+
+</div>
+
+<!-- MAP SECTION -->
+<div class="map-section">
+  <h2 class="map-title">📍 Notre Boutique</h2>
+  <div class="map-wrapper">
+    <iframe
+      src="https://www.openstreetmap.org/export/embed.html?bbox=4.8200%2C45.7400%2C4.8400%2C45.7600&layer=mapnik&marker=45.7500%2C4.8300"
+      allowfullscreen
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      title="Carte MiniDrive Collection - Lyon"
+    ></iframe>
+    <div class="map-info">
+      <div class="map-detail">
+        <span class="icon">📍</span>
+        <div><strong>12 Rue des Artisans</strong><br>69001 Lyon, France</div>
+      </div>
+      <div class="map-detail">
+        <span class="icon">🕐</span>
+        <div><strong>Horaires</strong><br>Lun–Sam : 10h00 – 19h00</div>
+      </div>
+      <div class="map-detail">
+        <span class="icon">📞</span>
+        <div><strong>Téléphone</strong><br>06 74 21 99 01</div>
+      </div>
+      <div class="map-detail">
+        <span class="icon">✉️</span>
+        <div><strong>Email</strong><br>contact@minidrive.fr</div>
+      </div>
+      <div class="map-detail">
+        <span class="icon">🚇</span>
+        <div><strong>Accès</strong><br>Métro D – Gare Part-Dieu</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="brand-name">🏎️ MiniDrive Collection</div>
+      <p>Votre spécialiste en voitures miniatures de collection depuis 2016.</p>
+      <div class="social-links">
+        <a class="social-btn">📸</a>
+        <a class="social-btn">👥</a>
+        <a class="social-btn">▶️</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="catalogue.html">Catalogue</a></li>
+        <li><a href="avis.html">Avis & Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="#">📍 12 Rue des Artisans, Lyon</a></li>
+        <li><a href="#">📞 04 72 XX XX XX</a></li>
+        <li><a href="#">✉️ contact@minidrive.fr</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">© 2025 MiniDrive Collection</div>
+</footer>
+
+<!-- CART MODAL -->
+<div class="modal-overlay" id="cartOverlay">
+  <div class="cart-panel">
+    <div class="cart-header">
+      <h2 id="cartModalTitle">🛒 Mon Panier</h2>
+      <button class="btn-close" id="cartClose">✕</button>
+    </div>
+    
+    <div class="cart-tabs">
+      <button class="cart-tab active" id="tabPanier" onclick="switchCartTab('panier')">Panier</button>
+      <button class="cart-tab" id="tabFavoris" onclick="switchCartTab('favoris')">Favoris</button>
+    </div>
+
+    <div id="cartViewPanier" class="cart-view-section">
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-footer" id="cartFooter"></div>
+    </div>
+    
+    <div id="cartViewFavoris" class="cart-view-section" style="display: none;">
+      <div class="cart-items" id="favItems"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await initDB();
+
+  // Remplir le select produits depuis la DB
+  const sel = document.getElementById('reviewProduct');
+  queryAllCarsForSelect().forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.name;
+    opt.textContent = `${c.emoji} ${c.name}`;
+    sel.appendChild(opt);
+  });
+
+  // Star rating input
+  let selectedRating = 0;
+  const stars = document.querySelectorAll('.star-input');
+  stars.forEach(s => {
+    s.addEventListener('mouseover', () => {
+      const val = parseInt(s.dataset.val);
+      stars.forEach((st, i) => st.classList.toggle('active', i < val));
+    });
+    s.addEventListener('mouseout', () => {
+      stars.forEach((st, i) => st.classList.toggle('active', i < selectedRating));
+    });
+    s.addEventListener('click', () => {
+      selectedRating = parseInt(s.dataset.val);
+      stars.forEach((st, i) => st.classList.toggle('active', i < selectedRating));
+    });
+  });
+
+  // Char count
+  const textarea = document.getElementById('reviewText');
+  textarea.addEventListener('input', () => {
+    document.getElementById('charCount').textContent = textarea.value.length;
+  });
+
+  // Submit — écrit dans la table SQLite `avis`
+  document.getElementById('submitReview').addEventListener('click', () => {
+    const name    = document.getElementById('reviewName').value.trim();
+    const product = document.getElementById('reviewProduct').value;
+    const text    = textarea.value.trim();
+
+    if (!name)               { showToast('Veuillez entrer votre prénom.', 'error'); return; }
+    if (!selectedRating)     { showToast('Veuillez sélectionner une note.', 'error'); return; }
+    if (!text || text.length < 10) { showToast('Votre avis doit faire au moins 10 caractères.', 'error'); return; }
+
+    insertAvis({ name, product: product || 'Achat général', rating: selectedRating, text });
+    showToast('Merci ! Votre avis a été publié. 🎉', 'success');
+
+    // Reset
+    document.getElementById('reviewName').value  = '';
+    document.getElementById('reviewEmail').value = '';
+    sel.value  = '';
+    textarea.value = '';
+    document.getElementById('charCount').textContent = '0';
+    selectedRating = 0;
+    stars.forEach(s => s.classList.remove('active'));
+
+    renderReviews();
+    renderRatingSummary();
+  });
+
+  renderReviews();
+  renderRatingSummary();
+  updateCartUI();
+});
+
+function renderRatingSummary() {
+  const reviews = queryAllAvis();
+  if (!reviews.length) return;
+
+  const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+  document.getElementById('avgRating').textContent = avg.toFixed(1);
+  document.getElementById('totalReviews').textContent = `${reviews.length} avis`;
+
+  const starsEl = document.getElementById('avgStars');
+  starsEl.innerHTML = Array.from({length: 5}, (_, i) =>
+    `<span class="star${i < Math.round(avg) ? '' : ' empty'}">★</span>`
+  ).join('');
+
+  const bars = document.getElementById('ratingBars');
+  bars.innerHTML = [5,4,3,2,1].map(n => {
+    const count = reviews.filter(r => r.rating === n).length;
+    const pct = Math.round((count / reviews.length) * 100);
+    return `<div class="bar-row">
+      <span class="bar-label">${n}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <span style="min-width:28px;font-size:0.72rem;">${count}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderReviews() {
+  const reviews = queryAllAvis();
+  const container = document.getElementById('reviewsList');
+
+  if (!reviews.length) {
+    container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">
+      Aucun avis pour l'instant. Soyez le premier !
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = reviews.slice().reverse().map(r => {
+    const initial = r.name.charAt(0).toUpperCase();
+    const stars = Array.from({length: 5}, (_, i) =>
+      `<span class="star${i < r.rating ? '' : ' empty'}">★</span>`
+    ).join('');
+    const date = new Date(r.date).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+    return `<div class="review-card">
+      <div class="review-header">
+        <div class="reviewer-avatar">${initial}</div>
+        <div class="reviewer-info">
+          <div class="reviewer-name">${escapeHtml(r.name)}</div>
+          <div class="review-meta">${date}</div>
+        </div>
+        <div class="review-stars">${stars}</div>
+      </div>
+      ${r.product ? `<div class="review-product">🚗 ${escapeHtml(r.product)}</div>` : ''}
+      <p class="review-text">"${escapeHtml(r.text)}"</p>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(str));
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

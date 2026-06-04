@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catalogue — MiniDrive Collection</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏎️</text></svg>" />
+  <!-- Données servies par l'API PHP/MySQL (dossier /api) -->
+  <!-- EmailJS : envoi des e-mails de confirmation de commande -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    /* ===== PRICE RANGE ===== */
+    .price-range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 200px;
+    }
+    .price-range-wrap label { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+    .range-slider {
+      flex: 1;
+      accent-color: var(--primary);
+      cursor: pointer;
+      height: 4px;
+    }
+    .price-display {
+      font-size: 0.8rem;
+      color: var(--gold);
+      font-weight: 700;
+      min-width: 60px;
+      text-align: right;
+    }
+
+    /* ===== SCALE PILLS ===== */
+    .scale-pill {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0;
+    }
+
+    /* ===== DETAIL MODAL ===== */
+    .detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 2500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      backdrop-filter: blur(8px);
+      padding: 2rem;
+    }
+    .detail-overlay.open { opacity: 1; pointer-events: all; }
+
+    .detail-panel {
+      background: var(--dark);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: scale(0.92);
+      transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .detail-overlay.open .detail-panel { transform: scale(1); }
+
+    .detail-head {
+      position: relative;
+      height: 300px;
+      background: #0a0a08;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      overflow: hidden;
+    }
+
+    .detail-head-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      transition: transform 6s ease;
+    }
+    .detail-head:hover .detail-head-img { transform: scale(1.06); }
+
+    .detail-head::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 60%;
+      background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+      pointer-events: none;
+    }
+
+    .detail-car-emoji {
+      font-size: 9rem;
+      filter: drop-shadow(0 20px 30px rgba(0,0,0,0.6));
+      position: relative;
+      z-index: 1;
+      animation: carFloat 4s ease-in-out infinite;
+    }
+
+    @keyframes carFloat {
+      0%, 100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-12px) rotate(3deg); }
+    }
+
+    .detail-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(13,13,26,0.8);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      z-index: 10;
+    }
+    .detail-close:hover { background: rgba(192,57,43,0.5); }
+
+    .detail-badges {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      display: flex;
+      gap: 6px;
+    }
+
+    .detail-body { padding: 2rem; }
+
+    .detail-title {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+
+    .detail-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.2rem; }
+
+    .detail-specs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .spec-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .spec-value {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--gold);
+      display: block;
+    }
+    .spec-key {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .detail-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: rgba(255,255,255,0.02);
+      border-radius: 10px;
+      border-left: 3px solid var(--primary);
+    }
+
+    .detail-price-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 1.5rem;
+    }
+
+    .detail-price-block .old { font-size: 0.85rem; color: var(--text-muted); text-decoration: line-through; }
+    .detail-price-block .current {
+      font-size: 2rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .detail-actions { display: flex; gap: 10px; }
+
+    /* ===== BARRE FILTRE REDESIGN ===== */
+
+    /* Barre principale collante */
+    .filter-section {
+      background: rgba(22,22,22,0.98) !important;
+      border-bottom: 1px solid rgba(176,141,87,0.18) !important;
+      padding: 0 !important;
+      backdrop-filter: blur(16px);
+    }
+
+    .filter-topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0.85rem 2rem;
+      border-bottom: 1px solid rgba(176,141,87,0.1);
+    }
+
+    /* Champ recherche redesign */
+    .search-wrap {
+      flex: 1;
+      max-width: 340px;
+      position: relative;
+    }
+
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(176,141,87,0.2);
+      border-radius: 8px;
+      padding: 9px 12px 9px 34px;
+      color: var(--creme);
+      font-size: 0.87rem;
+      outline: none;
+      transition: border-color 0.25s, background 0.25s;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--or-dark);
+      background: rgba(176,141,87,0.05);
+    }
+
+    .search-wrap input::placeholder { color: var(--text-muted); }
+
+    /* Séparateur vertical */
+    .filter-sep {
+      width: 1px;
+      height: 28px;
+      background: rgba(176,141,87,0.18);
+      flex-shrink: 0;
+    }
+
+    /* Select tri */
+    .sort-select-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .sort-select-wrap::after {
+      content: '▾';
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--or-dark);
+      font-size: 0.75rem;
+      pointer-events: none;
+    }
+
+    .sort-select-wrap select {
+      appearance: none;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(176,141,87,0.2);
+      border-radius: 8px;
+      padding: 9px 30px 9px 13px;
+      color: var(--creme);
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+      font-family: 'Segoe UI', sans-serif;
+      min-width: 170px;
+      transition: border-color 0.25s;
+    }
+
+    .sort-select-wrap select:focus { border-color: var(--or-dark); }
+    .sort-select-wrap select option { background: #1A1A1A; }
+
+    /* Slider prix */
+    .price-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .price-wrap-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .price-wrap input[type=range] {
+      accent-color: var(--or);
+      width: 110px;
+      cursor: pointer;
+      height: 3px;
+    }
+
+    .price-val {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--or-light);
+      min-width: 50px;
+      text-align: right;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* Bouton filtre avancé */
+    .btn-filter-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid rgba(176,141,87,0.25);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 0.83rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-family: 'Segoe UI', sans-serif;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-filter-toggle:hover,
+    .btn-filter-toggle.open {
+      border-color: var(--or);
+      color: var(--or-light);
+      background: rgba(176,141,87,0.08);
+    }
+
+    .btn-filter-toggle .filter-count {
+      background: var(--or);
+      color: var(--noir);
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      display: none;
+    }
+
+    .btn-filter-toggle .filter-count.visible { display: inline; }
+
+    /* Panneau filtres avancés (dépliable) */
+    .filter-advanced {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1),
+                  padding 0.35s ease;
+      padding: 0 2rem;
+      border-top: 0px solid rgba(176,141,87,0.12);
+    }
+
+    .filter-advanced.open {
+      max-height: 260px;
+      padding: 1.1rem 2rem 1.2rem;
+      border-top-width: 1px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-group:last-child { margin-bottom: 0; }
+
+    .filter-group-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--or-dark);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      min-width: 60px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* Chips redesign */
+    .chip {
+      padding: 5px 14px !important;
+      border-radius: 20px !important;
+      border: 1px solid rgba(176,141,87,0.2) !important;
+      background: transparent !important;
+      color: var(--text-muted) !important;
+      font-size: 0.78rem !important;
+      font-weight: 600 !important;
+      cursor: pointer;
+      transition: all 0.2s !important;
+      white-space: nowrap;
+      font-family: 'Segoe UI', sans-serif !important;
+      letter-spacing: 0.2px;
+    }
+
+    .chip:hover {
+      border-color: rgba(176,141,87,0.5) !important;
+      color: var(--creme) !important;
+      background: rgba(176,141,87,0.06) !important;
+    }
+
+    .chip.active {
+      background: rgba(31,77,58,0.8) !important;
+      border-color: rgba(176,141,87,0.45) !important;
+      color: var(--creme) !important;
+    }
+
+    /* Barre résultats + vue */
+    .results-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 2rem;
+      border-top: 1px solid rgba(176,141,87,0.08);
+    }
+
+    .results-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .results-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .results-count span { color: var(--or-light); font-weight: 700; }
+
+    .btn-reset {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 3px 8px;
+      border-radius: 4px;
+      transition: color 0.2s;
+      display: none;
+    }
+
+    .btn-reset.visible { display: inline; }
+    .btn-reset:hover { color: var(--or-light); }
+
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+    }
+
+    .view-btn {
+      width: 30px !important;
+      height: 30px !important;
+      border-radius: 6px !important;
+      font-size: 0.85rem !important;
+    }
+
+    /* Sort row (sous le filtre) */
+    .sort-row {
+      display: none; /* remplacé par results-bar */
+    }
+
+    @media (max-width: 700px) {
+      .filter-topbar { flex-wrap: wrap; padding: 0.85rem 1rem; }
+      .search-wrap   { max-width: 100%; order: -1; flex: 1 1 100%; }
+      .filter-sep    { display: none; }
+      .price-wrap    { flex: 1; }
+      .filter-advanced.open { max-height: 400px; }
+      .results-bar   { padding: 0.6rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PROMO BANNER -->
+<div class="promo-banner">
+  🎉 Livraison gratuite dès 80€ d'achat &nbsp;|&nbsp; <a href="#">Code promo : MINI10 pour -10%</a>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="logo-icon">
+      <img src="images/logominidrive.png" alt="MiniDrive" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><span style="display:none">🏎️</span>
+    </div>
+    <div>
+      <span class="brand-name">MiniDrive</span>
+      <span class="brand-sub">Collection</span>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="catalogue.html" class="active">Catalogue</a></li>
+    <li><a href="avis.html">Avis & Contact</a></li>
+  </ul>
+  <button class="nav-cart" id="cartBtn">
+    🛒 Panier
+    <span class="cart-badge" id="cartCount">0</span>
+  </button>
+</nav>
+
+<!-- CATALOGUE HERO -->
+<div class="catalogue-hero">
+  <div class="orbs-container">
+    <div class="orb orb-green orb-lg  orb-1"></div>
+    <div class="orb orb-red   orb-md  orb-2"></div>
+    <div class="orb orb-green orb-sm  orb-3"></div>
+    <div class="orb orb-red   orb-lg  orb-4"></div>
+    <div class="orb orb-green orb-md  orb-5"></div>
+    <div class="orb orb-red   orb-sm  orb-6"></div>
+  </div>
+  <div class="section-tag">🚗 Catalogue Complet</div>
+  <h1 class="section-title" style="margin-top:0.75rem;">Notre <span>Collection</span></h1>
+  <p class="section-desc">Plus de 250 modèles triés sur le volet, de l'icône à l'édition ultra-limitée</p>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-section">
+
+  <!-- Ligne principale toujours visible -->
+  <div class="filter-topbar">
+
+    <!-- Recherche -->
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="searchInput" placeholder="Marque, modèle, année…" autocomplete="off" />
+    </div>
+
+    <div class="filter-sep"></div>
+
+    <!-- Tri -->
+    <div class="sort-select-wrap">
+      <select id="sortSelect">
+        <option value="default">Trier par…</option>
+        <option value="price-asc">💰 Prix croissant</option>
+        <option value="price-desc">💰 Prix décroissant</option>
+        <option value="name-asc">A → Z</option>
+        <option value="name-desc">Z → A</option>
+        <option value="year-desc">Année — récent</option>
+        <option value="year-asc">Année — ancien</option>
+        <option value="rating-desc">⭐ Meilleures notes</option>
+      </select>
+    </div>
+
+    <div class="filter-sep"></div>
+
+    <!-- Prix max -->
+    <div class="price-wrap">
+      <span class="price-wrap-label">Max</span>
+      <input type="range" id="priceRange" min="10" max="500" value="500" step="5" />
+      <span class="price-val" id="priceDisplay">500 €</span>
+    </div>
+
+    <div class="filter-sep"></div>
+
+    <!-- Bouton filtres avancés -->
+    <button class="btn-filter-toggle" id="filterToggleBtn">
+      ▼ Filtres
+      <span class="filter-count" id="filterCount">0</span>
+    </button>
+
+  </div>
+
+  <!-- Panneau filtres avancés (dépliable) -->
+  <div class="filter-advanced" id="filterAdvanced">
+
+    <!-- Marque -->
+    <div class="filter-group">
+      <span class="filter-group-label">Marque</span>
+      <div id="brandChips" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="chip active" data-brand="all">Toutes</button>
+        <button class="chip" data-brand="Ferrari">Ferrari</button>
+        <button class="chip" data-brand="Porsche">Porsche</button>
+        <button class="chip" data-brand="Lamborghini">Lamborghini</button>
+        <button class="chip" data-brand="McLaren">McLaren</button>
+        <button class="chip" data-brand="Bugatti">Bugatti</button>
+        <button class="chip" data-brand="Shelby">Shelby</button>
+        <button class="chip" data-brand="Dodge">Dodge</button>
+        <button class="chip" data-brand="Mercedes">Mercedes</button>
+        <button class="chip" data-brand="BMW">BMW</button>
+        <button class="chip" data-brand="Aston Martin">Aston Martin</button>
+        <button class="chip" data-brand="other">Autre</button>
+      </div>
+    </div>
+
+    <!-- Échelle -->
+    <div class="filter-group">
+      <span class="filter-group-label">Échelle</span>
+      <div id="scaleChips" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="chip active" data-scale="all">Toutes</button>
+        <button class="chip" data-scale="1:18">1 : 18</button>
+        <button class="chip" data-scale="1:24">1 : 24</button>
+        <button class="chip" data-scale="1:43">1 : 43</button>
+        <button class="chip" data-scale="1:64">1 : 64</button>
+      </div>
+    </div>
+
+    <!-- Type -->
+    <div class="filter-group">
+      <span class="filter-group-label">Type</span>
+      <div id="typeChips" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="chip active" data-type="all">Tous</button>
+        <button class="chip" data-type="Sport">Sport</button>
+        <button class="chip" data-type="Classique">Classique</button>
+        <button class="chip" data-type="Course">Course</button>
+        <button class="chip" data-type="Limité">Édition Limitée</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Barre résultats -->
+  <div class="results-bar">
+    <div class="results-bar-left">
+      <div class="results-count" id="resultsCount"><span>0</span> modèles</div>
+      <button class="btn-reset" id="resetFilters">↺ Réinitialiser</button>
+    </div>
+    <div class="view-toggle">
+      <button class="view-btn active" id="gridViewBtn" title="Grille">⊞</button>
+      <button class="view-btn" id="listViewBtn" title="Liste">☰</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- CATALOGUE GRID -->
+<div class="catalogue-section">
+  <div class="sort-row"></div>
+  <div class="cars-grid" id="carsGrid">
+    <!-- Injecté via JS -->
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="brand-name">🏎️ MiniDrive Collection</div>
+      <p>Votre spécialiste en voitures miniatures de collection depuis 2016.</p>
+      <div class="social-links">
+        <a class="social-btn">📸</a>
+        <a class="social-btn">👥</a>
+        <a class="social-btn">▶️</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="catalogue.html">Catalogue</a></li>
+        <li><a href="avis.html">Avis & Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="#">📍 12 Rue des Artisans, Lyon</a></li>
+        <li><a href="#">📞 04 72 XX XX XX</a></li>
+        <li><a href="#">✉️ contact@minidrive.fr</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">© 2025 MiniDrive Collection</div>
+</footer>
+
+<!-- CART MODAL -->
+<div class="modal-overlay" id="cartOverlay">
+  <div class="cart-panel">
+    <div class="cart-header">
+      <h2 id="cartModalTitle">🛒 Mon Panier</h2>
+      <button class="btn-close" id="cartClose">✕</button>
+    </div>
+    
+    <div class="cart-tabs">
+      <button class="cart-tab active" id="tabPanier" onclick="switchCartTab('panier')">Panier</button>
+      <button class="cart-tab" id="tabFavoris" onclick="switchCartTab('favoris')">Favoris</button>
+    </div>
+
+    <div id="cartViewPanier" class="cart-view-section">
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-footer" id="cartFooter"></div>
+    </div>
+    
+    <div id="cartViewFavoris" class="cart-view-section" style="display: none;">
+      <div class="cart-items" id="favItems"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel" id="detailPanel">
+    <!-- Injecté via JS -->
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await initDB();
+
+  let activeFilters = { brand: 'all', scale: 'all', type: 'all', search: '', sort: 'default', maxPrice: 500 };
+
+  /* ── Compteur de filtres actifs ── */
+  function updateFilterBadge() {
+    let count = 0;
+    if (activeFilters.brand  !== 'all')     count++;
+    if (activeFilters.scale  !== 'all')     count++;
+    if (activeFilters.type   !== 'all')     count++;
+    if (activeFilters.maxPrice < 500)       count++;
+    const badge  = document.getElementById('filterCount');
+    const btnReset = document.getElementById('resetFilters');
+    badge.textContent = count;
+    badge.classList.toggle('visible', count > 0);
+    btnReset.classList.toggle('visible', count > 0 || !!activeFilters.search || activeFilters.sort !== 'default');
+  }
+
+  /* ── Affichage des résultats ── */
+  function applyFilters() {
+    const data = queryCars({
+      brand:    activeFilters.brand,
+      scale:    activeFilters.scale,
+      type:     activeFilters.type,
+      search:   activeFilters.search,
+      maxPrice: activeFilters.maxPrice,
+      sortBy:   activeFilters.sort,
+    });
+
+    const grid = document.getElementById('carsGrid');
+    document.getElementById('resultsCount').innerHTML =
+      `<span>${data.length}</span> modèle${data.length !== 1 ? 's' : ''}`;
+
+    if (data.length === 0) {
+      grid.innerHTML = `<div class="no-results">
+        <div class="no-results-icon">🔍</div>
+        <h3>Aucun modèle trouvé</h3>
+        <p>Modifiez vos filtres ou votre recherche.</p>
+      </div>`;
+    } else {
+      grid.innerHTML = data.map(c => buildCard(c)).join('');
+      setupCardEvents(grid);
+    }
+    updateFilterBadge();
+  }
+
+  /* ── Panneau filtres avancés ── */
+  const filterToggleBtn = document.getElementById('filterToggleBtn');
+  const filterAdvanced  = document.getElementById('filterAdvanced');
+
+  filterToggleBtn.addEventListener('click', () => {
+    const isOpen = filterAdvanced.classList.toggle('open');
+    filterToggleBtn.classList.toggle('open', isOpen);
+    filterToggleBtn.innerHTML = isOpen
+      ? `▲ Filtres <span class="filter-count ${document.getElementById('filterCount').classList.contains('visible') ? 'visible' : ''}" id="filterCount">${document.getElementById('filterCount').textContent}</span>`
+      : `▼ Filtres <span class="filter-count ${document.getElementById('filterCount').classList.contains('visible') ? 'visible' : ''}" id="filterCount">${document.getElementById('filterCount').textContent}</span>`;
+  });
+
+  /* ── Chips Marque ── */
+  document.getElementById('brandChips').addEventListener('click', e => {
+    if (!e.target.matches('.chip')) return;
+    document.querySelectorAll('#brandChips .chip').forEach(c => c.classList.remove('active'));
+    e.target.classList.add('active');
+    activeFilters.brand = e.target.dataset.brand;
+    applyFilters();
+  });
+
+  /* ── Chips Échelle ── */
+  document.getElementById('scaleChips').addEventListener('click', e => {
+    if (!e.target.matches('.chip')) return;
+    document.querySelectorAll('#scaleChips .chip').forEach(c => c.classList.remove('active'));
+    e.target.classList.add('active');
+    activeFilters.scale = e.target.dataset.scale;
+    applyFilters();
+  });
+
+  /* ── Chips Type ── */
+  document.getElementById('typeChips').addEventListener('click', e => {
+    if (!e.target.matches('.chip')) return;
+    document.querySelectorAll('#typeChips .chip').forEach(c => c.classList.remove('active'));
+    e.target.classList.add('active');
+    activeFilters.type = e.target.dataset.type;
+    applyFilters();
+  });
+
+  /* ── Recherche ── */
+  document.getElementById('searchInput').addEventListener('input', e => {
+    activeFilters.search = e.target.value.trim();
+    applyFilters();
+  });
+
+  /* ── Tri ── */
+  document.getElementById('sortSelect').addEventListener('change', e => {
+    activeFilters.sort = e.target.value;
+    applyFilters();
+  });
+
+  /* ── Prix max ── */
+  const priceRange   = document.getElementById('priceRange');
+  const priceDisplay = document.getElementById('priceDisplay');
+  priceRange.addEventListener('input', () => {
+    activeFilters.maxPrice = parseInt(priceRange.value);
+    priceDisplay.textContent = priceRange.value + ' €';
+    applyFilters();
+  });
+
+  /* ── Reset ── */
+  document.getElementById('resetFilters').addEventListener('click', () => {
+    activeFilters = { brand: 'all', scale: 'all', type: 'all', search: '', sort: 'default', maxPrice: 500 };
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('[data-brand="all"],[data-scale="all"],[data-type="all"]').forEach(c => c.classList.add('active'));
+    document.getElementById('searchInput').value = '';
+    document.getElementById('sortSelect').value  = 'default';
+    priceRange.value = 500;
+    priceDisplay.textContent = '500 €';
+    applyFilters();
+  });
+
+  /* ── Vue grille / liste ── */
+  const carsGrid = document.getElementById('carsGrid');
+  document.getElementById('gridViewBtn').addEventListener('click', () => {
+    carsGrid.classList.remove('list-view');
+    document.getElementById('gridViewBtn').classList.add('active');
+    document.getElementById('listViewBtn').classList.remove('active');
+  });
+  document.getElementById('listViewBtn').addEventListener('click', () => {
+    carsGrid.classList.add('list-view');
+    document.getElementById('listViewBtn').classList.add('active');
+    document.getElementById('gridViewBtn').classList.remove('active');
+  });
+
+  // Detail modal
+  document.addEventListener('click', e => {
+    const card = e.target.closest('.car-card');
+    if (!card) return;
+    if (e.target.closest('.btn-add-cart') || e.target.closest('.card-wishlist')) return;
+    const id = parseInt(card.dataset.id);
+    const car = queryCarById(id);
+    if (!car) return;
+    openDetail(car);
+  });
+
+  document.getElementById('detailOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('detailOverlay')) closeDetail();
+  });
+
+  function openDetail(car) {
+    const panel = document.getElementById('detailPanel');
+    const stars = Array.from({length: 5}, (_,i) =>
+      `<span class="star${i < Math.floor(car.rating) ? '' : ' empty'}">★</span>`
+    ).join('');
+
+    const headMedia = car.image
+      ? `<img
+           src="images/${car.image}"
+           alt="${car.name}"
+           class="detail-head-img"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
+         />
+         <div class="detail-car-emoji" style="display:none;position:absolute;z-index:1;">${car.emoji}</div>`
+      : `<div class="detail-car-emoji">${car.emoji}</div>`;
+
+    panel.innerHTML = `
+      <div class="detail-head">
+        ${headMedia}
+        <div class="detail-badges" style="position:absolute;top:1rem;left:1rem;z-index:2;display:flex;gap:6px;">
+          <span class="card-brand-badge">${car.brand}</span>
+          <span class="card-scale-badge">${car.scale}</span>
+          ${car.limited ? '<span class="card-brand-badge" style="border-color:rgba(243,156,18,0.4);color:var(--gold);">Limité</span>' : ''}
+        </div>
+        <button class="detail-close" id="detailCloseBtn" style="z-index:3;">✕</button>
+      </div>
+      <div class="detail-body">
+        <h2 class="detail-title">${car.name}</h2>
+        <div class="detail-subtitle">${car.brand} · ${car.model} · ${car.year} · ${stars} (${car.reviews} avis)</div>
+        <div class="detail-specs">
+          <div class="spec-box"><span class="spec-value">${car.scale}</span><span class="spec-key">Échelle</span></div>
+          <div class="spec-box"><span class="spec-value">${car.year}</span><span class="spec-key">Année</span></div>
+          <div class="spec-box"><span class="spec-value">${car.type}</span><span class="spec-key">Catégorie</span></div>
+          <div class="spec-box"><span class="spec-value">${car.maker}</span><span class="spec-key">Fabricant</span></div>
+          <div class="spec-box"><span class="spec-value">${car.color}</span><span class="spec-key">Couleur</span></div>
+          <div class="spec-box"><span class="spec-value">${car.stock > 0 ? car.stock + ' dispo' : 'Épuisé'}</span><span class="spec-key">Stock</span></div>
+        </div>
+        <p class="detail-desc">${car.description}</p>
+        <div class="detail-price-row">
+          <div class="detail-price-block">
+            ${car.oldPrice ? `<div class="old">${car.oldPrice.toFixed(2)}€</div>` : ''}
+            <div class="current">${car.price.toFixed(2)}€</div>
+          </div>
+          <div class="detail-actions">
+            <button class="btn-add-cart" onclick="addToCart(${car.id}); closeDetailFn();" style="padding:12px 24px;font-size:0.95rem;">
+              🛒 Ajouter au panier
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('detailCloseBtn').addEventListener('click', closeDetail);
+    document.getElementById('detailOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetail() {
+    document.getElementById('detailOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  window.closeDetailFn = closeDetail;
+
+  applyFilters();
+  updateCartUI();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MiniDrive Collection — Voitures Miniatures de Collection</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏎️</text></svg>" />
+  <!-- Données servies par l'API PHP/MySQL (dossier /api) -->
+  <!-- EmailJS : envoi des e-mails de confirmation de commande -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+
+    /* ── HERO VIDÉO ── */
+    .hero-video-section {
+      position: relative;
+      height: 100vh;
+      min-height: 560px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-video-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+    .hero-video-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .hero-video-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(26,26,26,0.35) 0%, rgba(26,26,26,0.55) 50%, rgba(26,26,26,0.85) 100%);
+    }
+    .hero-video-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(26,26,26,0.7) 0%, rgba(26,26,26,0.3) 55%, transparent 100%);
+      z-index: 1;
+    }
+    .hero-video-content {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      width: 100%;
+      padding: 0 2.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 3rem;
+    }
+    .hero-text-block { max-width: 580px; }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(176,141,87,0.15);
+      border: 1px solid rgba(176,141,87,0.45);
+      padding: 5px 14px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--or-light);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 1.4rem;
+    }
+    .hero-title {
+      font-size: clamp(2.6rem, 5vw, 4.2rem);
+      font-weight: 700;
+      line-height: 1.08;
+      margin-bottom: 1.4rem;
+      font-family: 'Georgia', serif;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.6);
+    }
+    .hero-title .line1 { color: #FFFFFF; display: block; }
+    .hero-title .line2 { display: block; color: var(--or-light); }
+    .hero-title .line3 {
+      display: block;
+      font-size: 0.5em;
+      color: var(--creme-dark);
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      font-weight: 400;
+      margin-top: 8px;
+      opacity: 0.8;
+    }
+    .hero-desc {
+      font-size: 1rem;
+      color: rgba(244,235,208,0.82);
+      margin-bottom: 2.2rem;
+      max-width: 460px;
+      line-height: 1.85;
+      border-left: 2px solid var(--or-dark);
+      padding-left: 1rem;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 2.2rem;
+      padding-top: 1.8rem;
+      border-top: 1px solid rgba(176,141,87,0.25);
+    }
+    .stat-item { text-align: center; }
+    .stat-number {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--or-light);
+      display: block;
+      font-family: 'Georgia', serif;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+    }
+    .stat-label {
+      font-size: 0.67rem;
+      color: rgba(244,235,208,0.6);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .hero-showcase-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .hero-showcase-frame {
+      background: rgba(26,26,26,0.6);
+      border: 1px solid rgba(176,141,87,0.3);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(14px);
+      width: 100%;
+      max-width: 340px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(176,141,87,0.15);
+    }
+    .showcase-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--or);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 1rem;
+      opacity: 0.9;
+    }
+    .showcase-img-wrap {
+      width: 100%;
+      height: 180px;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 0.9rem;
+      background: #141412;
+    }
+    .showcase-car-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      transition: transform 0.6s ease;
+    }
+    .showcase-img-wrap:hover .showcase-car-img { transform: scale(1.08); }
+    .showcase-car-name {
+      text-align: center;
+      font-family: 'Georgia', serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--creme);
+      margin-top: 0.9rem;
+      margin-bottom: 2px;
+    }
+    .showcase-car-price {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--or-light);
+      font-family: 'Georgia', serif;
+    }
+    .showcase-dots {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    .showcase-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(176,141,87,0.3);
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .showcase-dot.active { background: var(--or); }
+    .hero-scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: rgba(244,235,208,0.5);
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    .hero-scroll-hint .arrow { font-size: 1.1rem; }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(8px); }
+    }
+    .car-card .card-image-wrap { position: relative; }
+    @media (max-width: 860px) {
+      .hero-video-content { grid-template-columns: 1fr; }
+      .hero-showcase-col  { display: none; }
+      .hero-text-block    { max-width: 100%; text-align: center; }
+      .hero-desc          { margin-left: auto; margin-right: auto; border-left: none; border-top: 1px solid var(--or-dark); padding-left: 0; padding-top: 0.8rem; }
+      .hero-actions       { justify-content: center; }
+      .hero-stats         { justify-content: center; }
+    }
+
+    /* ── SECTION CHIFFRES / COMPTEURS ── */
+    .section-counters {
+      background: linear-gradient(135deg, #1a1a1a 0%, #111 50%, #1a1a1a 100%);
+      padding: 5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .section-counters::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--or), transparent);
+    }
+    .section-counters::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--or), transparent);
+    }
+    .counters-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+      text-align: center;
+    }
+    .counter-block {
+      padding: 2rem 1rem;
+      border: 1px solid rgba(176,141,87,0.15);
+      border-radius: 12px;
+      background: rgba(176,141,87,0.04);
+      transition: transform 0.3s, border-color 0.3s;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    .counter-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .counter-block:hover {
+      transform: translateY(-4px);
+      border-color: rgba(176,141,87,0.4);
+    }
+    .counter-icon {
+      font-size: 2.4rem;
+      margin-bottom: 0.8rem;
+      display: block;
+    }
+    .counter-num {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--or-light);
+      font-family: 'Georgia', serif;
+      display: block;
+      line-height: 1;
+    }
+    .counter-label {
+      font-size: 0.75rem;
+      color: rgba(244,235,208,0.55);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 0.5rem;
+      display: block;
+    }
+
+    /* ── SECTION NEWSLETTER / INSCRIPTION ── */
+    .section-newsletter {
+      background: #111;
+      padding: 6rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .newsletter-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .newsletter-tag {
+      display: inline-block;
+      background: rgba(176,141,87,0.12);
+      border: 1px solid rgba(176,141,87,0.35);
+      color: var(--or-light);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+    }
+    .newsletter-title {
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-family: 'Georgia', serif;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+    .newsletter-title span { color: var(--or-light); }
+    .newsletter-desc {
+      color: rgba(244,235,208,0.65);
+      font-size: 1rem;
+      line-height: 1.8;
+      margin-bottom: 2.5rem;
+    }
+    .newsletter-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      max-width: 480px;
+      margin: 0 auto 1.5rem;
+    }
+    .nl-field {
+      position: relative;
+    }
+    .nl-field input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(176,141,87,0.25);
+      border-radius: 8px;
+      padding: 0.9rem 1.2rem 0.9rem 3rem;
+      color: var(--creme);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s, background 0.3s;
+      box-sizing: border-box;
+    }
+    .nl-field input:focus {
+      border-color: var(--or);
+      background: rgba(176,141,87,0.07);
+    }
+    .nl-field input.input-error {
+      border-color: #e55;
+      background: rgba(255,80,80,0.05);
+    }
+    .nl-field input.input-ok {
+      border-color: #5a5;
+      background: rgba(80,200,80,0.05);
+    }
+    .nl-field-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    .nl-field-status {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    .nl-error-msg {
+      color: #e77;
+      font-size: 0.75rem;
+      margin-top: 0.3rem;
+      text-align: left;
+      display: none;
+    }
+    .nl-error-msg.show { display: block; }
+    .nl-btn {
+      background: linear-gradient(135deg, var(--or-dark), var(--or));
+      color: #111;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 8px;
+      padding: 1rem 2rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nl-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(176,141,87,0.4);
+    }
+    .nl-success {
+      background: rgba(80,200,80,0.1);
+      border: 1px solid rgba(80,200,80,0.3);
+      border-radius: 10px;
+      padding: 1.5rem;
+      color: #8f8;
+      font-size: 1rem;
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .nl-success.show { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .newsletter-bg-decor {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .decor-circle {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(176,141,87,0.08);
+    }
+    .decor-circle.c1 { width: 500px; height: 500px; top: -200px; right: -100px; }
+    .decor-circle.c2 { width: 300px; height: 300px; bottom: -100px; left: -80px; }
+
+    /* ── SCROLL ANIMATIONS ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .reveal.from-left {
+      transform: translateX(-60px);
+    }
+    .reveal.from-right {
+      transform: translateX(60px);
+    }
+    .reveal.scale-in {
+      transform: scale(0.85);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* Particules flottantes hero */
+    .hero-particles {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: rgba(176,141,87,0.6);
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0%   { opacity: 0; transform: translateY(0) scale(0); }
+      10%  { opacity: 1; }
+      90%  { opacity: 0.5; }
+      100% { opacity: 0; transform: translateY(-100vh) scale(1.5); }
+    }
+
+    /* ── SECTION EXPÉRIENCE (remplace brand strip) ── */
+    .section-experience {
+      background: linear-gradient(180deg, #0e0e0c 0%, #151510 100%);
+      padding: 6rem 2rem;
+      overflow: hidden;
+    }
+    .experience-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .experience-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      margin-top: 3rem;
+    }
+    .experience-visual {
+      position: relative;
+    }
+    .exp-car-showcase {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(176,141,87,0.2);
+      position: relative;
+      background: #0a0a08;
+      aspect-ratio: 4/3;
+    }
+    .exp-car-showcase img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 8s ease;
+    }
+    .exp-car-showcase:hover img { transform: scale(1.06); }
+    .exp-car-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+      padding: 1.5rem;
+    }
+    .exp-car-tag {
+      display: inline-block;
+      background: rgba(176,141,87,0.2);
+      border: 1px solid var(--or);
+      color: var(--or-light);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 3px;
+      margin-bottom: 0.5rem;
+    }
+    .exp-car-label {
+      font-family: 'Georgia', serif;
+      font-size: 1.1rem;
+      color: #fff;
+      font-weight: 700;
+    }
+    .exp-floating-badge {
+      position: absolute;
+      top: -16px;
+      right: -16px;
+      z-index: 10;
+      background: linear-gradient(135deg, var(--or-dark), var(--or));
+      color: #111;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 10px 16px;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(176,141,87,0.4);
+      white-space: nowrap;
+      animation: floatBadge 3s ease-in-out infinite;
+    }
+    @keyframes floatBadge {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-6px); }
+    }
+    .experience-features {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .exp-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.2rem;
+      padding: 1.4rem;
+      border: 1px solid rgba(176,141,87,0.12);
+      border-radius: 12px;
+      background: rgba(176,141,87,0.03);
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .exp-feature:hover {
+      border-color: rgba(176,141,87,0.35);
+      transform: translateX(6px);
+    }
+    .exp-feature-icon {
+      font-size: 1.8rem;
+      min-width: 2.4rem;
+      text-align: center;
+    }
+    .exp-feature-text h4 {
+      font-family: 'Georgia', serif;
+      font-size: 1rem;
+      color: var(--or-light);
+      margin-bottom: 0.3rem;
+      font-weight: 700;
+    }
+    .exp-feature-text p {
+      font-size: 0.85rem;
+      color: rgba(244,235,208,0.6);
+      line-height: 1.6;
+      margin: 0;
+    }
+    @media (max-width: 860px) {
+      .experience-grid { grid-template-columns: 1fr; }
+      .counters-inner { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 500px) {
+      .counters-inner { grid-template-columns: 1fr 1fr; }
+    }
+
+
+    /* ── FEATURED SPLIT LAYOUT ── */
+    .featured-split-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    .featured-left {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      position: relative;
+    }
+    .f1-floating-showcase {
+      width: 100%;
+      position: relative;
+      margin-top: 1rem;
+      pointer-events: none;
+    }
+    /* Lueur divine (godly glow) derrière la voiture */
+    .f1-floating-showcase::before {
+      content: '';
+      position: absolute;
+      top: 55%;
+      left: 50%;
+      width: 120%;
+      height: 90%;
+      background: radial-gradient(ellipse at center, rgba(176,141,87,0.25) 0%, transparent 60%);
+      transform: translate(-50%, -50%);
+      z-index: -1;
+      filter: blur(40px);
+    }
+    .f1-float-img {
+      width: 150%;
+      max-width: none;
+      transform: translateX(-15%);
+      display: block;
+      /* Masque radial beaucoup plus doux pour un fondu 'godly' absolu */
+      mask-image: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 65%);
+      -webkit-mask-image: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 65%);
+      filter: drop-shadow(0 30px 40px rgba(0,0,0,0.9));
+    }
+    .featured-right {
+      position: relative;
+    }
+    .featured-right .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 1024px) {
+      .featured-split-layout { grid-template-columns: 1fr; gap: 2rem; }
+      .f1-float-img { width: 100%; transform: none; mask-image: none; -webkit-mask-image: none; border-radius: 16px; margin-top: 2rem; }
+      .featured-right .featured-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+      .featured-left { align-items: center; text-align: center; }
+      .featured-left .section-title, .featured-left .section-desc { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PROMO BANNER -->
+<div class="promo-banner">
+  🎉 Livraison gratuite dès 80€ d'achat &nbsp;|&nbsp; <a href="catalogue.html">Voir le catalogue →</a>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="logo-icon">
+      <img src="images/logominidrive.png" alt="MiniDrive" class="logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/><span style="display:none">🏎️</span>
+    </div>
+    <div>
+      <span class="brand-name">MiniDrive</span>
+      <span class="brand-sub">Collection</span>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">Accueil</a></li>
+    <li><a href="catalogue.html">Catalogue</a></li>
+    <li><a href="avis.html">Avis & Contact</a></li>
+  </ul>
+  <button class="nav-cart" id="cartBtn">
+    🛒 Panier
+    <span class="cart-badge" id="cartCount">0</span>
+  </button>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     HERO — VIDÉO PLEIN ÉCRAN
+═══════════════════════════════════════════ -->
+<section class="hero-video-section">
+
+  <!-- Particules flottantes -->
+  <div class="hero-particles" id="heroParticles"></div>
+
+  <!-- Fond vidéo -->
+  <div class="hero-video-bg">
+    <video autoplay muted loop playsinline preload="auto">
+      <source src="vodm.mp4" type="video/mp4" />
+    </video>
+  </div>
+
+  <!-- Contenu par-dessus -->
+  <div class="hero-video-content">
+
+    <!-- Texte gauche -->
+    <div class="hero-text-block">
+      <div class="hero-badge">✦ Collection Exclusive 2025</div>
+      <h1 class="hero-title">
+        <span class="line1">L'Art de la</span>
+        <span class="line2">Miniature Auto</span>
+        <span class="line3">Precision · Authenticité · Passion</span>
+      </h1>
+      <p class="hero-desc">
+        Des modèles rares reproduits à l'échelle pour les passionnés d'automobile.
+        Chaque pièce est un chef-d'œuvre de précision et d'authenticité.
+      </p>
+      <div class="hero-actions">
+        <a href="catalogue.html" class="btn-primary">Explorer le Catalogue →</a>
+        <a href="avis.html" class="btn-secondary">Voir les Avis</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-number">250+</span>
+          <span class="stat-label">Modèles</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">15+</span>
+          <span class="stat-label">Marques</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">4.9★</span>
+          <span class="stat-label">Note Clients</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">8 ans</span>
+          <span class="stat-label">D'expertise</span>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- Indice de scroll -->
+  <div class="hero-scroll-hint">
+    <span>Défiler</span>
+    <span class="arrow">↓</span>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════════════════════
+     COMPTEURS ANIMÉS (remplace brand strip)
+═══════════════════════════════════════════ -->
+<section class="section-counters">
+  <div class="counters-inner">
+    <div class="counter-block" data-counter data-target="250" data-suffix="+">
+      <span class="counter-icon">🏎️</span>
+      <span class="counter-num" data-num>0</span>
+      <span class="counter-label">Modèles en stock</span>
+    </div>
+    <div class="counter-block" data-counter data-target="15" data-suffix="+">
+      <span class="counter-icon">🏁</span>
+      <span class="counter-num" data-num>0</span>
+      <span class="counter-label">Marques partenaires</span>
+    </div>
+    <div class="counter-block" data-counter data-target="3200" data-suffix="+">
+      <span class="counter-icon">🌍</span>
+      <span class="counter-num" data-num>0</span>
+      <span class="counter-label">Collectionneurs satisfaits</span>
+    </div>
+    <div class="counter-block" data-counter data-target="8" data-suffix=" ans">
+      <span class="counter-icon">🏅</span>
+      <span class="counter-num" data-num>0</span>
+      <span class="counter-label">Années d'expertise</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     BEST-SELLERS
+═══════════════════════════════════════════ -->
+<section class="section-featured reveal">
+  <div class="featured-split-layout">
+    <div class="featured-left">
+      <div class="section-tag">★ Coups de Cœur</div>
+      <h2 class="section-title" style="text-align: left; font-size: 3.5rem; line-height: 1.1; margin-bottom: 1rem;">Nos <br><span>Best-Sellers</span></h2>
+      <p class="section-desc" style="text-align: left; margin: 0 0 1rem 0; font-size: 1.1rem; max-width: 400px;">
+        Les modèles les plus appréciés de notre communauté de collectionneurs, sélectionnés pour leur réalisme absolu.
+      </p>
+      
+      <div class="f1-floating-showcase">
+        <img src="images/f1-banner.png" alt="Formula 1" class="f1-float-img">
+      </div>
+      
+      <a href="catalogue.html" class="btn-primary" style="display:inline-flex; padding: 14px 32px; font-size: 1rem; margin-top: 2rem;">
+        Voir tout le catalogue →
+      </a>
+    </div>
+
+    <div class="featured-right">
+      <div class="featured-grid" id="featuredGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     EXPÉRIENCE MINIDRIVE
+═══════════════════════════════════════════ -->
+<section class="section-experience">
+  <div class="experience-inner">
+    <div class="section-header reveal">
+      <div class="section-tag">◆ Notre Savoir-Faire</div>
+      <h2 class="section-title">L'Expérience <span>MiniDrive</span></h2>
+      <p class="section-desc">Plus qu'un simple achat — une immersion dans la culture automobile</p>
+    </div>
+    <div class="experience-grid">
+      <div class="experience-visual reveal from-left">
+        <div class="exp-floating-badge">✦ Édition Limitée 2025</div>
+        <div class="exp-car-showcase">
+          <img src="images/ferrari-250-gto.jpg" alt="Ferrari 250 GTO"
+               onerror="this.style.background='#1a1a1a';this.style.display='flex';this.style.alignItems='center';this.style.justifyContent='center';this.innerHTML='🏎️'" />
+          <div class="exp-car-overlay">
+            <span class="exp-car-tag">Ferrari</span>
+            <div class="exp-car-label">Ferrari 250 GTO 1962 — Édition Signée</div>
+          </div>
+        </div>
+      </div>
+      <div class="experience-features reveal from-right">
+        <div class="exp-feature reveal-delay-1">
+          <span class="exp-feature-icon">🔬</span>
+          <div class="exp-feature-text">
+            <h4>Précision à l'Échelle</h4>
+            <p>Chaque modèle est sculpté d'après les plans officiels du constructeur. Précision garantie jusqu'à 0,1 mm.</p>
+          </div>
+        </div>
+        <div class="exp-feature reveal-delay-2">
+          <span class="exp-feature-icon">🎖️</span>
+          <div class="exp-feature-text">
+            <h4>Certification d'Authenticité</h4>
+            <p>Toutes nos pièces sont livrées avec un certificat numéroté, gage de leur provenance officielle.</p>
+          </div>
+        </div>
+        <div class="exp-feature reveal-delay-3">
+          <span class="exp-feature-icon">🚚</span>
+          <div class="exp-feature-text">
+            <h4>Livraison Sécurisée Premium</h4>
+            <p>Emballage anti-choc sur mesure, assurance incluse. Livraison partout en France et en Europe.</p>
+          </div>
+        </div>
+        <div class="exp-feature reveal-delay-4">
+          <span class="exp-feature-icon">💎</span>
+          <div class="exp-feature-text">
+            <h4>Service Collector Personnalisé</h4>
+            <p>Conseils d'experts, commandes spéciales, précommandes de modèles introuvables. Votre passion, notre mission.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     WHY US
+═══════════════════════════════════════════ -->
+<section class="section-why">
+  <div class="section-header reveal">
+    <div class="section-tag">◆ Pourquoi Nous</div>
+    <h2 class="section-title">L'Excellence au <span>Service du Passionné</span></h2>
+  </div>
+  <div class="why-grid">
+    <div class="why-card reveal scale-in reveal-delay-1">
+      <span class="why-icon">🔬</span>
+      <h3 class="why-title">Précision Parfaite</h3>
+      <p class="why-desc">Chaque modèle est reproduit avec un souci du détail extrême, respectant fidèlement l'original jusqu'au moindre composant.</p>
+    </div>
+    <div class="why-card reveal scale-in reveal-delay-2">
+      <span class="why-icon">🏅</span>
+      <h3 class="why-title">Authenticité Garantie</h3>
+      <p class="why-desc">Toutes nos pièces sont officiellement licenciées et livrées avec un certificat d'authenticité numéroté.</p>
+    </div>
+    <div class="why-card reveal scale-in reveal-delay-3">
+      <span class="why-icon">📦</span>
+      <h3 class="why-title">Emballage Premium</h3>
+      <p class="why-desc">Livraison dans un écrin luxueux conçu pour protéger et mettre en valeur votre acquisition lors de l'ouverture.</p>
+    </div>
+    <div class="why-card reveal scale-in reveal-delay-4">
+      <span class="why-icon">🌍</span>
+      <h3 class="why-title">Sourcing Mondial</h3>
+      <p class="why-desc">Nous sourçons directement auprès des meilleurs fabricants : Bburago, Hot Wheels Elite, AutoArt, Minichamps.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     NEWSLETTER + INSCRIPTION (avec DB SQLite)
+═══════════════════════════════════════════ -->
+<section class="section-newsletter">
+  <div class="newsletter-bg-decor">
+    <div class="decor-circle c1"></div>
+    <div class="decor-circle c2"></div>
+  </div>
+  <div class="newsletter-inner reveal">
+    <div class="newsletter-tag">✉️ Newsletter Exclusive</div>
+    <h2 class="newsletter-title">Restez <span>Informé</span> en Premier</h2>
+    <p class="newsletter-desc">
+      Nouvelles arrivées, éditions limitées, offres exclusives — recevez tout en avant-première.
+      Aucun spam, désinscription en un clic.
+    </p>
+    <div class="newsletter-form" id="nlForm">
+      <div class="nl-field">
+        <span class="nl-field-icon">👤</span>
+        <input type="text" id="nlName" placeholder="Votre prénom" autocomplete="given-name" />
+        <span class="nl-field-status" id="nlNameStatus"></span>
+        <div class="nl-error-msg" id="nlNameError">Prénom requis (minimum 2 caractères)</div>
+      </div>
+      <div class="nl-field">
+        <span class="nl-field-icon">✉️</span>
+        <input type="email" id="nlEmail" placeholder="votre@email.com" autocomplete="email" />
+        <span class="nl-field-status" id="nlEmailStatus"></span>
+        <div class="nl-error-msg" id="nlEmailError">Adresse email invalide</div>
+      </div>
+      <div class="nl-field">
+        <span class="nl-field-icon">📞</span>
+        <input type="tel" id="nlPhone" placeholder="06 12 34 56 78 (optionnel)" autocomplete="tel" />
+        <span class="nl-field-status" id="nlPhoneStatus"></span>
+        <div class="nl-error-msg" id="nlPhoneError">Format invalide (ex: 06 12 34 56 78 ou +33 6 12 34 56 78)</div>
+      </div>
+      <button class="nl-btn" onclick="submitNewsletter()">
+        🎯 Rejoindre la Collection
+      </button>
+    </div>
+    <div class="nl-success" id="nlSuccess">
+      ✅ <strong>Bienvenue !</strong> Votre inscription a bien été enregistrée. Préparez-vous à découvrir les pièces les plus rares en avant-première.
+    </div>
+    <p style="color:rgba(244,235,208,0.3);font-size:0.7rem;margin-top:1rem;">
+      🔒 Vos données sont stockées localement et ne sont jamais partagées.
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <span class="brand-name">🏎️ MiniDrive Collection</span>
+      <p>Votre spécialiste en voitures miniatures de collection depuis 2016. Passion, expertise et authenticité au rendez-vous.</p>
+      <div class="social-links">
+        <a class="social-btn" title="Instagram">📸</a>
+        <a class="social-btn" title="Facebook">👥</a>
+        <a class="social-btn" title="YouTube">▶️</a>
+        <a class="social-btn" title="Twitter">🐦</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="catalogue.html">Catalogue</a></li>
+        <li><a href="avis.html">Avis & Contact</a></li>
+        <li><a href="catalogue.html">Nouveautés</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Catégories</h4>
+      <ul>
+        <li><a href="catalogue.html">Ferrari</a></li>
+        <li><a href="catalogue.html">Porsche</a></li>
+        <li><a href="catalogue.html">Lamborghini</a></li>
+        <li><a href="catalogue.html">Éditions Limitées</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="#">📍 12 Rue des Artisans, Lyon</a></li>
+        <li><a href="#">📞 04 72 XX XX XX</a></li>
+        <li><a href="#">✉️ contact@minidrive.fr</a></li>
+        <li><a href="#">🕐 Lun–Sam : 10h–19h</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    © 2025 MiniDrive Collection — Tous droits réservés &nbsp;|&nbsp; Fait avec ❤️ pour les passionnés
+  </div>
+</footer>
+
+<!-- CART MODAL -->
+<div class="modal-overlay" id="cartOverlay">
+  <div class="cart-panel">
+    <div class="cart-header">
+      <h2 id="cartModalTitle">🛒 Mon Panier</h2>
+      <button class="btn-close" id="cartClose">✕</button>
+    </div>
+    
+    <div class="cart-tabs">
+      <button class="cart-tab active" id="tabPanier" onclick="switchCartTab('panier')">Panier</button>
+      <button class="cart-tab" id="tabFavoris" onclick="switchCartTab('favoris')">Favoris</button>
+    </div>
+
+    <div id="cartViewPanier" class="cart-view-section">
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-footer" id="cartFooter"></div>
+    </div>
+    
+    <div id="cartViewFavoris" class="cart-view-section" style="display: none;">
+      <div class="cart-items" id="favItems"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+
+
+<script src="app.js"></script>
+<script>
+/* ── PARTICULES HERO ── */
+(function() {
+  const container = document.getElementById('heroParticles');
+  if (!container) return;
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      bottom: ${Math.random() * 30}%;
+      width: ${1 + Math.random() * 3}px;
+      height: ${1 + Math.random() * 3}px;
+      animation-duration: ${6 + Math.random() * 14}s;
+      animation-delay: ${Math.random() * 10}s;
+      opacity: ${0.3 + Math.random() * 0.5};
+    `;
+    container.appendChild(p);
+  }
+})();
+
+/* ── SCROLL REVEAL ── */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+/* ── COMPTEURS ANIMÉS ── */
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target, 10);
+  const suffix = el.dataset.suffix || '';
+  const numEl = el.querySelector('[data-num]');
+  const duration = 1800;
+  const startTime = performance.now();
+  function update(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease out cubic
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.floor(eased * target);
+    numEl.textContent = current.toLocaleString('fr-FR') + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && !entry.target.dataset.counted) {
+      entry.target.dataset.counted = '1';
+      entry.target.classList.add('visible');
+      animateCounter(entry.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('[data-counter]').forEach(el => counterObserver.observe(el));
+
+/* ── VALIDATION EMAIL ── */
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+/* ── VALIDATION TÉLÉPHONE ── */
+function isValidPhone(phone) {
+  if (!phone) return true; // optionnel
+  // Accepte : 06 12 34 56 78 / 0612345678 / +33 6 12 34 56 78 / +33612345678
+  const cleaned = phone.replace(/[\s\-\.]/g, '');
+  return /^(\+33|0033)?[0-9]{9,10}$/.test(cleaned);
+}
+
+/* ── FEEDBACK CHAMPS EN TEMPS RÉEL ── */
+function setFieldStatus(inputId, statusId, errorId, isValid, isEmpty) {
+  const input = document.getElementById(inputId);
+  const status = document.getElementById(statusId);
+  const error = document.getElementById(errorId);
+  input.classList.remove('input-error', 'input-ok');
+  if (isEmpty) {
+    status.textContent = '';
+    error.classList.remove('show');
+    return;
+  }
+  if (isValid) {
+    input.classList.add('input-ok');
+    status.textContent = '✅';
+    error.classList.remove('show');
+  } else {
+    input.classList.add('input-error');
+    status.textContent = '❌';
+    error.classList.add('show');
+  }
+}
+
+document.getElementById('nlName').addEventListener('input', function() {
+  const v = this.value.trim();
+  setFieldStatus('nlName', 'nlNameStatus', 'nlNameError', v.length >= 2, v.length === 0);
+});
+document.getElementById('nlEmail').addEventListener('input', function() {
+  const v = this.value.trim();
+  setFieldStatus('nlEmail', 'nlEmailStatus', 'nlEmailError', isValidEmail(v), v.length === 0);
+});
+document.getElementById('nlPhone').addEventListener('input', function() {
+  const v = this.value.trim();
+  setFieldStatus('nlPhone', 'nlPhoneStatus', 'nlPhoneError', isValidPhone(v), v.length === 0);
+});
+
+/* ── SOUMISSION NEWSLETTER AVEC SQLite ── */
+async function submitNewsletter() {
+  const name  = document.getElementById('nlName').value.trim();
+  const email = document.getElementById('nlEmail').value.trim();
+  const phone = document.getElementById('nlPhone').value.trim();
+
+  // Validation
+  let hasError = false;
+  if (name.length < 2) {
+    setFieldStatus('nlName', 'nlNameStatus', 'nlNameError', false, false);
+    hasError = true;
+  }
+  if (!isValidEmail(email)) {
+    setFieldStatus('nlEmail', 'nlEmailStatus', 'nlEmailError', false, false);
+    hasError = true;
+  }
+  if (phone && !isValidPhone(phone)) {
+    setFieldStatus('nlPhone', 'nlPhoneStatus', 'nlPhoneError', false, false);
+    hasError = true;
+  }
+  if (hasError) {
+    showToast('Veuillez corriger les champs en rouge.', 'error');
+    return;
+  }
+
+  // Enregistrement SQLite
+  try {
+    await initDB();
+    DB.run(`
+      CREATE TABLE IF NOT EXISTS newsletter (
+        id        INTEGER PRIMARY KEY AUTOINCREMENT,
+        name      TEXT NOT NULL,
+        email     TEXT NOT NULL,
+        phone     TEXT,
+        date      TEXT NOT NULL
+      );
+    `);
+    // Vérifier doublon email
+    const exists = DB.exec(`SELECT COUNT(*) FROM newsletter WHERE email = '${email.replace(/'/g,"''")}'`);
+    const count = exists[0]?.values[0][0] || 0;
+    if (count > 0) {
+      showToast('Cet email est déjà inscrit à la newsletter !', 'error');
+      return;
+    }
+    DB.run(
+      'INSERT INTO newsletter (name, email, phone, date) VALUES (?,?,?,?)',
+      [name, email, phone || null, new Date().toLocaleDateString('fr-FR')]
+    );
+    persistDB();
+    // Succès UI
+    document.getElementById('nlForm').style.display = 'none';
+    document.getElementById('nlSuccess').classList.add('show');
+    showToast('🎉 Inscription réussie ! Bienvenue ' + name + ' !', 'success');
+  } catch(e) {
+    showToast('Erreur lors de l\'inscription. Veuillez réessayer.', 'error');
+    console.error(e);
+  }
+}
+
+/* ── INIT PAGE ── */
+document.addEventListener('DOMContentLoaded', async () => {
+  await initDB();
+
+  /* Best-sellers */
+  const featured = queryFeatured();
+  const grid = document.getElementById('featuredGrid');
+  grid.innerHTML = featured.map(c => buildCardWithImage(c)).join('');
+  setupCardEvents(grid);
+  updateCartUI();
+
+  /* Animer les cartes best-sellers au scroll */
+  grid.querySelectorAll('.car-card').forEach((card, i) => {
+    card.classList.add('reveal');
+    card.style.transitionDelay = `${i * 0.08}s`;
+    revealObserver.observe(card);
+  });
+
+
+});
+
+/* Carte avec image */
+function buildCardWithImage(car) {
+  const stars = Array.from({length: 5}, (_, i) =>
+    `<span class="star${i < Math.floor(car.rating) ? '' : ' empty'}">★</span>`
+  ).join('');
+  return `<div class="car-card" data-id="${car.id}">
+    <div class="card-image-wrap">
+      <span class="card-brand-badge">${car.brand}</span>
+      <span class="card-scale-badge">${car.scale}</span>
+      <img src="images/${car.image}" alt="${car.name}" class="car-card-img"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+      <div class="car-emoji" style="display:none">${car.emoji}</div>
+      <button class="card-wishlist" data-id="${car.id}" onclick="toggleWishlist(event,${car.id})">♡</button>
+    </div>
+    <div class="card-body">
+      <div class="card-name">${car.name}</div>
+      <div class="card-meta">
+        <span class="card-year">${car.year}</span>
+        <span class="card-dot"></span>
+        <span class="card-model">${car.model}</span>
+        ${car.limited ? '<span class="card-dot"></span><span class="card-model" style="color:var(--or)">Limité</span>' : ''}
+      </div>
+      <p class="card-desc">${car.description}</p>
+      <div class="card-stars">${stars}<span class="star-count">(${car.reviews})</span></div>
+      <div class="card-footer">
+        <div class="card-price">
+          ${car.oldPrice ? `<span class="price-original">${car.oldPrice.toFixed(2)}€</span>` : ''}
+          <span class="price-current">${car.price.toFixed(2)}€</span>
+        </div>
+        <button class="btn-add-cart" onclick="addToCart(${car.id})">🛒 Ajouter</button>
+      </div>
+    </div>
+  </div>`;
+}
+</script>
+</body>
+</html>
